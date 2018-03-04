@@ -1,8 +1,8 @@
-import {OptionMultipleValue} from "./OptionMultipleValue";
-import {OptionMultiple} from "./OptionMultiple";
-import {OptionType} from './OptionType';
-import {Tools} from "../Tools/Tools";
-import {Option} from "./Option";
+import { OptionMultipleValue } from "./OptionMultipleValue";
+import { OptionMultiple } from "./OptionMultiple";
+import { OptionType } from './OptionType';
+import { Tools } from "../Tools/Tools";
+import { Option } from "./Option";
 
 export interface ILink
 {
@@ -38,7 +38,7 @@ export interface ILinkInfo
 
 export interface IFoundLinkInfo
 {
-    option: Option;
+    option: Option | undefined;
 
     info: ILinkInfo;
 
@@ -57,7 +57,7 @@ export class OptionLinksStorage
 
     private static _parseCache: { [linkValue: string]: ILinkInfo } = {};
 
-    public static parseLink(linkValue: any): ILinkInfo
+    public static parseLink(linkValue: any): ILinkInfo | undefined
     {
         if (this._parseCache[linkValue]) {
             return this._parseCache[linkValue];
@@ -81,6 +81,10 @@ export class OptionLinksStorage
 
                     const parsedParam = param.match(/(^.+)=(.+)$/i);
 
+                    if (!parsedParam) {
+                        return;
+                    }
+
                     params[parsedParam[1]] = parsedParam[2];
 
                     if (parsedParam[1] === 'priority') {
@@ -93,7 +97,7 @@ export class OptionLinksStorage
                 parentLevel: sourceOptResult[1].length / 3,
                 optionFullName: sourceOptResult[2],
                 optionPath: sourceOptResult[2].replace(/\.[^.]+$/i, ''),
-                optionName: sourceOptResult[2].match(/[^.]+$/i)[0],
+                optionName: (sourceOptResult[2].match(/[^.]+$/i) || [])[0],
                 relative: !linkValue.match(/^\$[.a-z0-9_-]+(\?.+)?\$$/i),
                 value: linkValue.replace(/\?.+(?=\$$)/i, ''),
                 params: params
@@ -106,7 +110,7 @@ export class OptionLinksStorage
         return linkValue
             && typeof linkValue === 'string'
             && !!linkValue.match(/\$.+\$$/i)
-        ;
+            ;
     }
 
     constructor(option: Option)
@@ -121,8 +125,6 @@ export class OptionLinksStorage
 
     public add(linkValue: string, linkParams: any = {}): void
     {
-        const parsedLinkValue = OptionLinksStorage.parseLink(linkValue);
-
         if (!OptionLinksStorage.isLink(linkValue)) {
             throw new Error(
                 'Trying add not a link "' + linkValue + '" ' +
@@ -135,6 +137,12 @@ export class OptionLinksStorage
                 'Trying add already existent link "' + linkValue + '" ' +
                 'to OptionLinks storage of option ' + this._option
             );
+        }
+
+        const parsedLinkValue = OptionLinksStorage.parseLink(linkValue);
+
+        if (!parsedLinkValue) {
+            return;
         }
 
         linkValue = parsedLinkValue.value;
@@ -183,7 +191,7 @@ export class OptionLinksStorage
         }
     }
 
-    public remove(linkValue: string): ILink
+    public remove(linkValue: string): ILink | undefined
     {
         for (let i = 0; i < this._links.length; i++) {
             if (this._links[i].value !== linkValue) {
@@ -270,15 +278,20 @@ export class OptionLinksStorage
         const parsedLinkValue = OptionLinksStorage.parseLink(linkValue);
         const option = this._option;
 
-        let sourceOption: Option = null;
-        let sourceContext: Option = option;
-        let parentLevel = parsedLinkValue.parentLevel;
+        let sourceOption: Option | undefined;
+        let sourceContext: Option | undefined = option;
 
-        const result = {
+        const result = <IFoundLinkInfo>{
             option: sourceOption,
             params: linkParams,
             info: parsedLinkValue
         };
+
+        if (!parsedLinkValue) {
+            return result;
+        }
+
+        let parentLevel = parsedLinkValue.parentLevel;
 
         // Relative path
 
@@ -301,13 +314,16 @@ export class OptionLinksStorage
 
             sourceOption = sourceContext.getContext().getOption(requiredOptName);
 
-        // Absolute path
+            // Absolute path
 
         } else {
-            sourceContext = option
-                .getContextRoot()
-                .getOption<OptionMultiple<OptionMultipleValue>>(parsedLinkValue.optionPath)
-            ;
+            const contextRoot =  option.getContextRoot();
+
+            if (!contextRoot) {
+                return result;
+            }
+
+            sourceContext = contextRoot.getOption<OptionMultiple<OptionMultipleValue>>(parsedLinkValue.optionPath);
 
             if (!sourceContext) {
                 return result;
@@ -327,7 +343,7 @@ export class OptionLinksStorage
         return result;
     }
 
-    public findOptionTypeDefinition<T extends OptionType>(linkValue: string): T
+    public findOptionTypeDefinition<T extends OptionType>(linkValue: string): T | undefined
     {
         if (!linkValue) {
             return;
@@ -336,7 +352,11 @@ export class OptionLinksStorage
         const parsedLinkValue = OptionLinksStorage.parseLink(linkValue);
         const option = this._option;
 
-        let sourceContext: Option = option;
+        if (!parsedLinkValue) {
+            return;
+        }
+
+        let sourceContext: Option | undefined = option;
         let parentLevel = parsedLinkValue.parentLevel;
 
         // Relative path
@@ -370,7 +390,7 @@ export class OptionLinksStorage
 
         const contextRoot = option.getContextRoot();
 
-        if (!contextRoot.findChildTypeDefinition) {
+        if (!contextRoot || !contextRoot.findChildTypeDefinition) {
             return;
         }
 

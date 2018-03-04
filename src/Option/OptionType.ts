@@ -17,7 +17,7 @@ export interface IOptionDefinition
 
     writable?: boolean;
 
-    watcher?: (event: IOptionWatcherEvent) => any;
+    watcher?: ((event: IOptionWatcherEvent) => any) | null;
 
     nullable?: boolean;
 
@@ -51,9 +51,9 @@ export class OptionType
 
     private _definition: IOptionDefinition;
 
-    private _context: IOptionContext;
+    private _context: IOptionContext | null = null;
 
-    private _contextType: OptionType;
+    private _contextType: OptionType | null = null;
 
     public static getName(): string
     {
@@ -156,13 +156,14 @@ export class OptionType
      */
     public getNameFull(): string
     {
-        let propertyName = this.getName(),
-            contextProperty = this.getContextType(),
-            contextPropertyName = "";
+        const propertyName = this.getName();
+        const contextProperty = this.getContextType();
+        let contextPropertyName = "";
 
         if (contextProperty) {
             contextPropertyName = contextProperty.getNameFull();
         }
+
         return (contextPropertyName && contextPropertyName + "." || "") + propertyName;
     }
 
@@ -191,7 +192,7 @@ export class OptionType
      *
      * @param {Object} contextObject
      */
-    public setContext(contextObject: IOptionContext): void
+    public setContext(contextObject: IOptionContext | null): void
     {
         this._context = contextObject;
     }
@@ -201,7 +202,7 @@ export class OptionType
      *
      * @returns {Object}
      */
-    public getContext(): IOptionContext
+    public getContext(): IOptionContext | null
     {
         return this._context;
     }
@@ -211,7 +212,7 @@ export class OptionType
      *
      * @param {OptionType} contextType
      */
-    public setContextType(contextType: OptionType): void
+    public setContextType(contextType: OptionType | null): void
     {
         this._contextType = contextType;
     }
@@ -354,7 +355,7 @@ export class OptionType
      *
      * @param {*} watcher
      */
-    public validateWatcher(watcher: (event: IOptionWatcherEvent) => any): void
+    public validateWatcher(watcher: ((event: IOptionWatcherEvent) => any) | null): void
     {
         if (watcher !== null && typeof watcher !== 'function') {
             throwInvalidOptionError('watcher', this, 'a function or null');
@@ -366,7 +367,7 @@ export class OptionType
      *
      * @param {(Function|null)} watcher
      */
-    public setWatcher(watcher: (event: IOptionWatcherEvent) => any): void
+    public setWatcher(watcher: ((event: IOptionWatcherEvent) => any) | null): void
     {
         this.validateWatcher(watcher);
         this.getDefinition().watcher = watcher;
@@ -377,7 +378,7 @@ export class OptionType
      *
      * @returns {(Function|null)}
      */
-    public getWatcher(): (event: IOptionWatcherEvent) => any
+    public getWatcher(): ((event: IOptionWatcherEvent) => any) | null | undefined
     {
         return this.getDefinition().watcher;
     }

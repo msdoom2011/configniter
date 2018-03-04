@@ -1,5 +1,5 @@
-import {IOptionDefinition} from './Option/OptionType';
-import {Tools} from './Tools/Tools';
+import { IOptionDefinition } from './Option/OptionType';
+import { Tools } from './Tools/Tools';
 
 export interface IConvertSchemaRules
 {
@@ -60,19 +60,18 @@ interface IRuleInfo
     priority: number;
 }
 
-
 export class ConfigSchemaConverter
 {
     public static convert(
         optName: string,
         schema: IOptionDefinition | { [optName: string]: IOptionDefinition },
-        rules: Array<IRuleInfo>
-    ): IOptionDefinition | { [optName: string]: IOptionDefinition } {
-
-        rules = this.normalizeRules(rules);
+        rules: IConvertSchemaRules
+    ): IOptionDefinition | { [optName: string]: IOptionDefinition }
+    {
+        const rulesNormalized = this.normalizeRules(rules);
 
         if (typeof schema['type'] === 'string') {
-            for (const rule of rules) {
+            for (const rule of rulesNormalized) {
                 if (!this.isMatchSelector(optName, schema, rule.selector)) {
                     continue;
                 }
@@ -204,7 +203,10 @@ export class ConfigSchemaConverter
                 return false;
             }
 
-            if (attrValue && !attrValue.split('|').some((value: any) => Tools.isEqual(String(value), String(optDefinition[attrName])))) {
+            if (attrValue && !attrValue.split('|').some((value: any) => Tools.isEqual(
+                    String(value),
+                    String(optDefinition[attrName])
+                ))) {
                 return false;
             }
         }
@@ -218,7 +220,7 @@ export class ConfigSchemaConverter
         return true;
     }
 
-    private static parseSelector(selector: string): { name: string, attrs: string[], negation: string[] }
+    private static parseSelector(selector: string): { name: string, attrs: string[], negation: string[] } | undefined
     {
         const matchResult = selector.match(/^([^:]+)(?::\s*not\s*\(([^\)]+(?=\))))?/i);
 

@@ -1,13 +1,25 @@
-import {IOptionDefinition} from './Option/OptionType';
-import {OptionManager} from "./Option/OptionManager";
-import {ConfigSchema} from "./ConfigSchema";
-import {Configurator} from "./Configurator";
-import {Config} from "./Config";
-import {Tools} from "./Tools/Tools";
-import "./ConfigParser";
+import { IOptionDefinition } from './Option/OptionType';
+import { OptionManager } from "./Option/OptionManager";
+import { ConfigSchema } from "./ConfigSchema";
+import { Configurator } from "./Configurator";
+import { Tools } from "./Tools/Tools";
+import { Config } from "./Config";
 
 export class ConfIgniter
 {
+    /**
+     * Custom types definitions
+     *
+     * @type {{}}
+     */
+    public static _types: { [optName: string]: IOptionDefinition } = {};
+
+    /**
+     * Option manager instance
+     *
+     * @type {OptionManager}
+     * @private
+     */
     private _optionManager: OptionManager;
 
     /**
@@ -16,7 +28,7 @@ export class ConfIgniter
      * @type {Object}
      * @private
      */
-    private _schemaDefinition: { [optName: string]: IOptionDefinition} = {};
+    private _schemaDefinition: { [optName: string]: IOptionDefinition } = {};
 
     /**
      * Definition of configs class
@@ -24,7 +36,7 @@ export class ConfIgniter
      * @type {ConfigSchema}
      * @private
      */
-    private _schema: ConfigSchema;
+    private _schema: ConfigSchema | null = null;
 
     /**
      * Collection of registered app configurators
@@ -40,7 +52,7 @@ export class ConfIgniter
      * @type {Config}
      * @private
      */
-    private _configs: Config;
+    private _configs: Config | null = null;
 
     public static normalizeSchema(
         optionManager: OptionManager,
@@ -59,7 +71,7 @@ export class ConfIgniter
                 schema['type'] = parentTypeName;
             }
 
-            for (let attrName in schema) {
+            for (const attrName in schema) {
                 if (
                     schema.hasOwnProperty(attrName)
                     && Tools.isPlainObject(schema[attrName])
@@ -79,12 +91,24 @@ export class ConfIgniter
         return schema;
     }
 
+    public static types(): { [optName: string]: IOptionDefinition };
+    public static types(customTypes: { [optName: string]: IOptionDefinition }): void
+    public static types(customTypes?: { [optName: string]: IOptionDefinition }): { [optName: string]: IOptionDefinition } | void
+    {
+        if (customTypes) {
+            this._types = Tools.extendDeep(this._types, customTypes);
+
+        } else {
+            return this._types;
+        }
+    }
+
     /**
      * @constructor
      */
     constructor(schema?: { [optName: string]: IOptionDefinition })
     {
-        // this._schemaStorage = new ConfigSchemaStorage(this);
+        this._optionManager = new OptionManager((<typeof ConfIgniter>this.constructor).types());
 
         if (Tools.isPlainObject(schema)) {
             this._schemaDefinition = this.createSchemaDefinition(schema);
@@ -100,7 +124,6 @@ export class ConfIgniter
     {
         return this._optionManager;
     }
-
 
     // =============================== CONFIG SCHEMA ==============================
 
@@ -180,7 +203,6 @@ export class ConfIgniter
 
         return schema;
     }
-
 
     // ================================== CONFIGS =================================
 
@@ -297,7 +319,6 @@ export class ConfIgniter
 
         return this._schema;
     }
-
 
     // =============================== CONFIGURATORS ==============================
 

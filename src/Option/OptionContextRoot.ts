@@ -1,10 +1,8 @@
-import {IOptionWatchersAware, OptionWatchersAwareMixin} from "./OptionWatchersAware";
-import {IOptionContext, OptionContext} from "./OptionContext";
-import {EventableMixin, IEventable} from "../Event/Eventable";
-import {OptionManager} from "./OptionManager";
-import {Constructor} from '../Tools/Tools';
+import { IOptionWatchersAware, OptionWatchersAwareMixin } from "./OptionWatchersAware";
+import { IOptionContext, OptionContext } from "./OptionContext";
+import { IConstructor } from '../Tools/Tools';
 
-export interface IOptionContextRoot extends IOptionContext, IOptionWatchersAware, IEventable
+export interface IOptionContextRoot extends IOptionContext, IOptionWatchersAware
 {
     // Some definitions
 }
@@ -12,23 +10,11 @@ export interface IOptionContextRoot extends IOptionContext, IOptionWatchersAware
 export class OptionContextRoot
 
     extends OptionWatchersAwareMixin(
-        EventableMixin(
-            <Constructor<OptionContext>>OptionContext
-        )
+        <IConstructor<OptionContext>>OptionContext
     )
 
     implements IOptionContextRoot
 {
-    constructor(optionManager: OptionManager)
-    {
-        super(optionManager);
-
-        this
-            .event('optionAdded')
-            .event('optionRemoved')
-        ;
-    }
-
     /**
      * Should return one of two available values: "class" or "option"
      */

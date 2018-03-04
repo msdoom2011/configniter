@@ -1,7 +1,7 @@
-import {OptionContextRoot} from './Option/OptionContextRoot';
-import {ConfigSchema} from "./ConfigSchema";
-import {Tools} from './Tools/Tools';
-import {OptionType} from './Option/OptionType';
+import { OptionContextRoot } from './Option/OptionContextRoot';
+import { OptionType } from './Option/OptionType';
+import { ConfigSchema } from "./ConfigSchema";
+import { Tools } from './Tools/Tools';
 
 export class Config extends OptionContextRoot
 {
@@ -34,7 +34,8 @@ export class Config extends OptionContextRoot
     {
         this.setData(getOptValue(optionName.split(/[\.\[\]]/)));
 
-        function getOptValue(parts: string[]): any {
+        function getOptValue(parts: string[]): any
+        {
             const optName = parts.shift();
 
             if (!optName) {
@@ -66,11 +67,13 @@ export class Config extends OptionContextRoot
             if (!value.hasOption(part)) {
                 throw new Error(
                     'Trying to get undefined config ' +
-                    'option "' + parts.slice(0, i + 1).join('.') + '"'
+                    'option "' + parts.slice(0, i + 1)
+                        .join('.') + '"'
                 );
             }
 
-            value = value.getOption(part).getValue();
+            value = value.getOption(part)
+                .getValue();
         }
 
         return <T>value;
@@ -93,10 +96,12 @@ export class Config extends OptionContextRoot
         }
     }
 
-    public getDefinition<T extends OptionType>(optionName: string): T
+    public getDefinition<T extends OptionType>(optionName: string): T | undefined
     {
         const nameParts = optionName.split('.');
-        const optionType = this.getSchema().getOption(nameParts.shift());
+        const optionType = this
+            .getSchema()
+            .getOption(nameParts.shift() || '');
 
         if (nameParts.length === 0) {
             return <T>optionType;
@@ -106,7 +111,7 @@ export class Config extends OptionContextRoot
             return;
         }
 
-        return (<any>optionType).findChildTypeDefinition<T>(nameParts.join('.'));
+        return <T>(<any>optionType).findChildTypeDefinition(nameParts.join('.'));
     }
 
     public findChildTypeDefinition<T extends OptionType>(optionName: string): T
@@ -142,7 +147,7 @@ export class Config extends OptionContextRoot
      *
      * @param {Object} values
      */
-    public setData(values: {[optName: string]: any}): void
+    public setData(values: { [optName: string]: any }): void
     {
         if (!values || !Tools.isPlainObject(values)) {
             throw new Error(
@@ -185,9 +190,15 @@ export class Config extends OptionContextRoot
         const options = this.getSchema().getOptions();
         const values = <any>{};
 
-        for (let optName in options) {
+        for (const optName in options) {
             if (options.hasOwnProperty(optName)) {
-                values[optName] = this.getOption(optName).getValueData();
+                const option = this.getOption(optName);
+
+                if (!option) {
+                    continue;
+                }
+
+                values[optName] = option.getValueData();
             }
         }
 

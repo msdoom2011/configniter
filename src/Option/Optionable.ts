@@ -1,9 +1,9 @@
-import {OptionContextRoot} from "./OptionContextRoot";
-import {Constructor, Tools} from "../Tools/Tools";
-import {IOptionContext} from "./OptionContext";
-import {IOptionDefinition} from "./OptionType";
-import {OptionManager} from "./OptionManager";
-import {Option} from "./Option";
+import { OptionContextRoot } from "./OptionContextRoot";
+import { IConstructor, Tools } from "../Tools/Tools";
+import { IOptionContext } from "./OptionContext";
+import { IOptionDefinition } from "./OptionType";
+import { OptionManager } from "./OptionManager";
+import { Option } from "./Option";
 
 export interface IOptionableStatic
 {
@@ -28,9 +28,12 @@ export interface IOptionable
         (optName: string, optValue: any): void;
     };
 
-    optOrigin<T>(optName: string, optValue?: any): T;
+    optOrigin: {
+        <T>(optName: string): T;
+        (optName: string, optValue: any): void;
+    };
 
-    getOption<T extends Option>(optName: string): T;
+    getOption<T extends Option>(optName: string): T | undefined;
 
     setOptionsData(data: any & object, quetMode?: boolean): void;
 
@@ -50,7 +53,7 @@ export interface IOptionable
 }
 
 export const OptionableMixin = <
-    T extends Constructor<{}>>
+    T extends IConstructor<{}>>
 (Base: T) => {
 
     abstract class OptionableMixin extends Base implements IOptionable
@@ -118,55 +121,55 @@ export const OptionableMixin = <
         }
 
         /**
-        * Validates options values after the data has been set
-        *
-        * To ensure that all required fields have been filled then
-        * you have to call this method right after you've set data
-        * to optionable class instance
-        *
-        * @example
-        *
-        * ...
-        * optionable.setData(data);
-        * optionable.validateRequiredOptions();
-        * ...
-        */
+         * Validates options values after the data has been set
+         *
+         * To ensure that all required fields have been filled then
+         * you have to call this method right after you've set data
+         * to optionable class instance
+         *
+         * @example
+         *
+         * ...
+         * optionable.setData(data);
+         * optionable.validateRequiredOptions();
+         * ...
+         */
         public validateRequiredOptions(): void
         {
-           const emptyOptions = this.getEmptyRequiredOptions();
+            const emptyOptions = this.getEmptyRequiredOptions();
 
-           if (emptyOptions.length) {
-               throw new Error(
-                   'There some required to fill options that are left ' +
-                   'after data has been set:\n- ' + emptyOptions.join('\n- ')
-               )
-           }
+            if (emptyOptions.length) {
+                throw new Error(
+                    'There some required to fill options that are left ' +
+                    'after data has been set:\n- ' + emptyOptions.join('\n- ')
+                )
+            }
         }
 
         /**
-        * Validates options values after the data has been set
-        */
+         * Validates options values after the data has been set
+         */
         public getEmptyRequiredOptions(): string[]
         {
-           const constructor = <typeof OptionableMixin>this.constructor;
-           const options = constructor.getOptions();
-           const emptyOptions = [];
+            const constructor = <typeof OptionableMixin>this.constructor;
+            const options = constructor.getOptions();
+            const emptyOptions = [];
 
-           for (let optionName in options) {
-               if (
-                   options.hasOwnProperty(optionName)
-                   && options[optionName].required
-                   && (
-                       options[optionName].type !== 'boolean'
-                       || options[optionName].nullable
-                   )
-                   && Tools.isEmpty(this.opt(optionName))
-               ) {
-                   emptyOptions.push(optionName);
-               }
-           }
+            for (let optionName in options) {
+                if (
+                    options.hasOwnProperty(optionName)
+                    && options[optionName].required
+                    && (
+                        options[optionName].type !== 'boolean'
+                        || options[optionName].nullable
+                    )
+                    && Tools.isEmpty(this.opt(optionName))
+                ) {
+                    emptyOptions.push(optionName);
+                }
+            }
 
-           return emptyOptions;
+            return emptyOptions;
         }
 
         public isOpt(optionName: string): boolean
@@ -251,7 +254,9 @@ export const OptionableMixin = <
         /**
          * Invokes origin accessor functions
          */
-        public optOrigin<T>(optName: string, optValue?: any): T
+        public optOrigin<T>(optName: string): T
+        public optOrigin(optName: string, optValue: any): void
+        public optOrigin<T>(optName: string, optValue?: any): T | void
         {
             const options = this._options;
             const option = options.getOption(optName);
@@ -278,7 +283,7 @@ export const OptionableMixin = <
             }
         }
 
-        public getOption<T extends Option>(optName: string): T
+        public getOption<T extends Option>(optName: string): T | undefined
         {
             return this._options.getOption(optName);
         }
@@ -335,7 +340,7 @@ export const OptionableMixin = <
          *      notEmpty: string[]
          *      empty: string[]
          */
-        public isMatchOptions (matchOptions: { [optName: string]: any }): boolean
+        public isMatchOptions(matchOptions: { [optName: string]: any }): boolean
         {
             for (let optName in matchOptions) {
                 if (!matchOptions.hasOwnProperty(optName)) {
@@ -412,7 +417,9 @@ export const OptionableMixin = <
     return OptionableMixin;
 };
 
-export abstract class Optionable extends OptionableMixin(class {})
+export abstract class Optionable extends OptionableMixin(class
+{
+})
 {
     // Nothing
 }

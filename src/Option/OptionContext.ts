@@ -1,7 +1,7 @@
-import {IOptionDefinition, OptionType} from "./OptionType";
-import {OptionMultiple} from "./OptionMultiple";
-import {OptionManager} from "./OptionManager";
-import {Option} from "./Option";
+import { IOptionDefinition, OptionType } from "./OptionType";
+import { OptionMultiple } from "./OptionMultiple";
+import { OptionManager } from "./OptionManager";
+import { Option } from "./Option";
 
 export interface IOptionContext
 {
@@ -13,7 +13,7 @@ export interface IOptionContext
 
     getOptions(): { [optName: string]: Option };
 
-    getOption: <T extends Option>(optionName?: string) => T;
+    getOption: <T extends Option>(optionName?: string) => T | undefined;
 
     hasOption: (optionName: string) => boolean;
 }
@@ -68,8 +68,12 @@ export abstract class OptionContext implements IOptionContext
      *     It is possible specify name of direct child options like "foo", "bar".
      *     Also it is possible specify name of deeper child options like "foo.opt1.opt2"
      */
-    public getOption<T extends Option>(optionName?: string): T
+    public getOption<T extends Option>(optionName?: string): T | undefined
     {
+        if (!optionName) {
+            return;
+        }
+
         const parts = optionName.split('.');
         let option: any;
 
@@ -121,7 +125,7 @@ export abstract class OptionContext implements IOptionContext
      *     It is possible specify name of direct child options like "foo", "bar".
      *     Also it is possible specify name of deeper child options like "foo.opt1.opt2"
      */
-    public getOptionDefinition<T extends OptionType>(optionName: string): T
+    public getOptionDefinition<T extends OptionType>(optionName: string): T | undefined
     {
         const parts = optionName.split('.');
         let optionTypeDef: any;
@@ -138,11 +142,13 @@ export abstract class OptionContext implements IOptionContext
             const part = parts[i];
 
             if (i === 0) {
-                if (!this.getOption(part)) {
+                const option = this.getOption(part);
+
+                if (!option) {
                     return;
                 }
 
-                optionTypeDef = this.getOption(part).getTypeDefinition();
+                optionTypeDef = option.getTypeDefinition();
 
                 continue;
             }

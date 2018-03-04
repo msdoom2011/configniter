@@ -1,10 +1,10 @@
-import {IOptionWatchersAware, OptionWatchersAware} from "./OptionWatchersAware";
-import {ILink, OptionLinksStorage} from "./OptionLinksStorage";
-import {IOptionWatcherEvent} from "./OptionWatcherEvent";
-import {IOptionContextRoot} from "./OptionContextRoot";
-import {IOptionContext} from "./OptionContext";
-import {OptionType} from "./OptionType";
-import {Tools} from "../Tools/Tools";
+import { IOptionWatchersAware, OptionWatchersAware } from "./OptionWatchersAware";
+import { ILink, OptionLinksStorage } from "./OptionLinksStorage";
+import { IOptionWatcherEvent } from "./OptionWatcherEvent";
+import { IOptionContextRoot } from "./OptionContextRoot";
+import { IOptionContext } from "./OptionContext";
+import { OptionType } from "./OptionType";
+import { Tools } from "../Tools/Tools";
 
 export interface IOptionWatcherInfo
 {
@@ -23,7 +23,7 @@ export class Option extends OptionWatchersAware
 
     protected _context: IOptionContext;
 
-    protected _contextRoot: IOptionContextRoot;
+    protected _contextRoot: IOptionContextRoot | null = null;
 
     protected _linksStorage: OptionLinksStorage;
 
@@ -41,8 +41,14 @@ export class Option extends OptionWatchersAware
      */
     public static generateGetter(optionName: string): () => any
     {
-        return function(): any {
-            return (<IOptionContext>this).getOption(optionName).getValue();
+        return function(this: IOptionContext): any {
+            const option = this.getOption(optionName);
+
+            if (!option) {
+                return;
+            }
+
+            return option.getValue();
         };
     }
 
@@ -56,8 +62,14 @@ export class Option extends OptionWatchersAware
      */
     public static generateSetter(optionName: string): (value: any) => void
     {
-        return function(value: any): void {
-            return (<IOptionContext>this).getOption(optionName).setValue(value);
+        return function(this: IOptionContext, value: any): void {
+            const option = this.getOption(optionName);
+
+            if (!option) {
+                return;
+            }
+
+            return option.setValue(value);
         };
     }
 
@@ -87,8 +99,13 @@ export class Option extends OptionWatchersAware
         const context = this.getContext();
         let parentName = "";
 
+        //@TODO get rid of the getContextType method in option context object!!!!
         if (context.getContextType() === 'option') {
-            parentName = context.getOption().getNameFull();
+            const parentOption = context.getOption();
+
+            if (parentOption) {
+                parentName = parentOption.getNameFull();
+            }
         }
 
         return (parentName && parentName + "." || "") + optName;
@@ -200,8 +217,6 @@ export class Option extends OptionWatchersAware
             get: constructor.generateGetter(optionName),
             set: constructor.generateSetter(optionName)
         });
-
-        this.getContextRoot().trigger('optionAdded', this);
     }
 
     /**
@@ -212,7 +227,6 @@ export class Option extends OptionWatchersAware
         const optionName = this.getName();
         const context = this.getContext();
 
-        this.getContextRoot().trigger('optionRemoved', this);
         this._contextRoot = null;
 
         if (!context) {
@@ -283,7 +297,7 @@ export class Option extends OptionWatchersAware
      *
      * @returns {IOptionContext}
      */
-    public getContextRoot(): IOptionContextRoot
+    public getContextRoot(): IOptionContextRoot | null
     {
         if (this._contextRoot) {
             return this._contextRoot;
@@ -297,7 +311,9 @@ export class Option extends OptionWatchersAware
 
         switch (context.getContextType()) {
             case 'option':
-                this._contextRoot = context.getOption().getContextRoot();
+                const option = context.getOption();
+
+                this._contextRoot = option ? option.getContextRoot() : null;
                 break;
 
             case 'class':
@@ -311,7 +327,7 @@ export class Option extends OptionWatchersAware
         return this._contextRoot;
     }
 
-    public getContextOption(): Option
+    public getContextOption(): Option | undefined
     {
         const context = this.getContext();
 
@@ -356,6 +372,10 @@ export class Option extends OptionWatchersAware
 
         if (context && context.getContextType() === 'option') {
             const parentOption = context.getOption();
+
+            if (!parentOption) {
+                return false;
+            }
 
             return parentOption.isLocked() || false;
 
@@ -425,6 +445,11 @@ export class Option extends OptionWatchersAware
             && context.getContextType() === 'option'
         ) {
             const parent = context.getOption();
+
+            if (!parent) {
+                return parents;
+            }
+
             const parentTypeDef = parent.getTypeDefinition();
             const parentNewValue = parentTypeDef.getEmptyValue();
             const parentOldValue = parentTypeDef.getEmptyValue();
@@ -576,7 +601,12 @@ export class Option extends OptionWatchersAware
         this._value = undefined;
     }
 
-    public invokeValueWatchers(newValue: any, oldValue: any, bubbled: boolean = false, invokeParentWatchers: boolean = true): void
+    public invokeValueWatchers(
+        newValue: any,
+        oldValue: any,
+        bubbled: boolean = false,
+        invokeParentWatchers: boolean = true
+    ): void
     {
         const event = this.createWatcherEvent(newValue, oldValue, bubbled);
         const linkedOptions = this.getLinkedOptions();
@@ -668,23 +698,21 @@ export class Option extends OptionWatchersAware
             for (let optionInfo of sourceOptionsInfo) {
                 const option = optionInfo.option;
 
-                if (option === this) {
+                if (option === this || !option) {
                     continue;
                 }
 
-                if (option) {
-                    if (
-                        option.hasLink()
-                        && (<any>option)[getterName](true) === undefined
-                    ) {
-                        continue;
-                    }
-
-                    sourceOption = option;
-                    sourceOptionInfo = optionInfo;
-
-                    break loop;
+                if (
+                    option.hasLink()
+                    && (<any>option)[getterName](true) === undefined
+                ) {
+                    continue;
                 }
+
+                sourceOption = option;
+                sourceOptionInfo = optionInfo;
+
+                break loop;
             }
         }
 
@@ -704,6 +732,13 @@ export class Option extends OptionWatchersAware
 
         if (!sourceOption || sourceOption === this) {
             return this.getTypeDefinition().getValue(true);
+        }
+
+        if (!sourceOptionInfo) {
+            throw new Error(
+                'The sourceOptionInfo is not found when trying to get ' +
+                'linked value of option "' + this.getNameFull() + '"'
+            );
         }
 
         if (!sourceOption) {

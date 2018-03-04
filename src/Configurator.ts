@@ -1,11 +1,48 @@
-import {IConfigSchemaDefinition} from "./Schema/ConfigSchemaDefinition";
-import {OptionMultipleValue} from "./Option/OptionMultipleValue";
-import {IOptionDefinition} from "./Option/OptionType";
-import {OptionManager} from "./Option/OptionManager";
-import {ConfIgniter} from './ConfIgniter';
-import {Config} from "./Config";
+import { OptionMultipleValue } from "./Option/OptionMultipleValue";
+import { IOptionDefinition } from "./Option/OptionType";
+import { OptionManager } from "./Option/OptionManager";
+import { ConfIgniter } from './ConfIgniter';
+import { Config } from "./Config";
 
-export abstract class Configurator
+export interface IConfigurator
+{
+    getName(): string;
+
+    isPrivate(): boolean;
+
+    setConfIgniter(confIgniter: ConfIgniter): void;
+
+    getSchema(): { [optName: string]: IOptionDefinition } | IOptionDefinition;
+
+    alterSchema(
+        schema: IOptionDefinition | { [optionName: string]: IOptionDefinition }
+    ): IOptionDefinition | { [optionName: string]: IOptionDefinition };
+
+    normalizeSchema(
+        schema: IOptionDefinition | { [optionName: string]: IOptionDefinition }
+    ): IOptionDefinition | { [optionName: string]: IOptionDefinition };
+
+    injectSchema(
+        schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
+        appSchema: { [optionName: string]: IOptionDefinition }
+    ): void;
+
+    processSchema(
+        schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
+        appSchema: { [optionName: string]: IOptionDefinition }
+    ): void;
+
+    validateSchema(
+        schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
+        appSchema: { [optionName: string]: IOptionDefinition }
+    ): void;
+
+    processConfigs(configs: OptionMultipleValue, appConfigs: Config): void;
+
+    getValues(): any;
+}
+
+export abstract class Configurator implements IConfigurator
 {
     /**
      * An instance of subclass config manager
@@ -13,7 +50,7 @@ export abstract class Configurator
      * @type {ConfIgniter}
      * @private
      */
-    private _confIgniter: ConfIgniter;
+    private _confIgniter: ConfIgniter | any;
 
     /**
      * Returns name of configuration subtree
@@ -57,7 +94,7 @@ export abstract class Configurator
      *
      * @returns {ConfIgniter}
      */
-    public getConfIgniter(): ConfIgniter
+    protected getConfIgniter(): ConfIgniter
     {
         return this._confIgniter;
     }
@@ -67,7 +104,7 @@ export abstract class Configurator
      *
      * @returns {OptionManager}
      */
-    public getOptionManager(): OptionManager
+    protected getOptionManager(): OptionManager
     {
         return this.getConfIgniter().getOptionManager();
     }
@@ -117,7 +154,7 @@ export abstract class Configurator
      *     ...
      * }
      */
-    public getSchema(): { [optName: string]: IOptionDefinition }|IOptionDefinition
+    public getSchema(): { [optName: string]: IOptionDefinition } | IOptionDefinition
     {
         return {};
     }
@@ -139,7 +176,7 @@ export abstract class Configurator
      * Alters configuration definition object.
      * Allows add/edit/remove config definition parts of all application
      *
-     * @param {IConfigSchemaDefinition|IOptionDefinition} schema
+     * @param {*|IOptionDefinition} schema
      */
     public alterSchema(
         schema: IOptionDefinition | { [optionName: string]: IOptionDefinition }
@@ -152,12 +189,12 @@ export abstract class Configurator
      * Injects schema to common configuration tree schema.
      * Applicable only for private configurators!
      *
-     * @param {IConfigSchemaDefinition|IOptionDefinition} schema
-     * @param {IConfigSchemaDefinition} appSchema
+     * @param {*|IOptionDefinition} schema
+     * @param {*} appSchema
      */
     public injectSchema(
         schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
-        appSchema: IConfigSchemaDefinition
+        appSchema: { [optionName: string]: IOptionDefinition }
     ): void
     {
         // Some operations
@@ -166,12 +203,12 @@ export abstract class Configurator
     /**
      * Allows process schema right after it has been altered by all configurators
      *
-     * @param {IConfigSchemaDefinition|IOptionDefinition} schema
-     * @param {IConfigSchemaDefinition} appSchema
+     * @param {*|IOptionDefinition} schema
+     * @param {*} appSchema
      */
     public processSchema(
         schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
-        appSchema: IConfigSchemaDefinition
+        appSchema: { [optionName: string]: IOptionDefinition }
     ): void
     {
         // Some operations
@@ -181,12 +218,12 @@ export abstract class Configurator
      * Allows validate schema right after it has been processed
      * Should throw error if something went wrong.
      *
-     * @param {IConfigSchemaDefinition|IOptionDefinition} schema
-     * @param {IConfigSchemaDefinition} appSchema
+     * @param {*|IOptionDefinition} schema
+     * @param {*} appSchema
      */
     public validateSchema(
         schema: IOptionDefinition | { [optionName: string]: IOptionDefinition },
-        appSchema: IConfigSchemaDefinition
+        appSchema: { [optionName: string]: IOptionDefinition }
     ): void
     {
         // Some operations

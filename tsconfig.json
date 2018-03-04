@@ -1,14 +1,11 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "alwaysStrict": true,
     "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "strictNullChecks": false,
-    "noImplicitThis": false,
     "sourceMap": true,
     "allowJs": true,
     "target": "ES5",
+    "strict": true,
     "baseUrl": "./src",
     "lib": [
       "DOM",

@@ -1,5 +1,5 @@
-import {IOptionWatcherEvent, OptionWatcherEvent} from "./OptionWatcherEvent";
-import {Constructor} from "../Tools/Tools";
+import { IOptionWatcherEvent, OptionWatcherEvent } from "./OptionWatcherEvent";
+import { IConstructor } from "../Tools/Tools";
 
 export interface IOptionWatchersAware
 {
@@ -19,7 +19,7 @@ export interface IOptionWatchersAware
 }
 
 export const OptionWatchersAwareMixin = <
-    T extends Constructor<{}>>
+    T extends IConstructor<{}>>
 (Base: T) => {
 
     return class extends Base implements IOptionWatchersAware
@@ -71,7 +71,8 @@ export const OptionWatchersAwareMixin = <
          */
         public hasWatcher(callback: (event: IOptionWatcherEvent) => any): boolean
         {
-            return this.getWatchers().indexOf(callback) >= 0;
+            return this.getWatchers()
+                .indexOf(callback) >= 0;
         }
 
         /**
@@ -118,7 +119,11 @@ export const OptionWatchersAwareMixin = <
     }
 };
 
-export abstract class OptionWatchersAware extends OptionWatchersAwareMixin(class {}) implements IOptionWatchersAware
+export abstract class OptionWatchersAware
+
+    extends OptionWatchersAwareMixin(class {})
+
+    implements IOptionWatchersAware
 {
     // Nothing
 }

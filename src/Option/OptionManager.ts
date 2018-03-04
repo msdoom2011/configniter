@@ -1,29 +1,29 @@
-import {ObjectCollectionType} from "./Collection/ObjectCollection/ObjectCollectionType";
-import {ArrayCollectionType} from "./Collection/ArrayCollection/ArrayCollectionType";
-import {OptionType, IOptionTypeConstructor, IOptionDefinition} from "./OptionType";
-import {FunctionType} from "./Function/FunctionType";
-import {BooleanType} from "./Boolean/BooleanType";
-import {UntypedType} from "./Untyped/UntypedType";
-import {IOptionContext} from "./OptionContext";
-import {StringType} from "./String/StringType";
-import {NumberType} from "./Number/NumberType";
-import {ObjectType} from "./Object/ObjectType";
-import {ArrayType} from "./Array/ArrayType";
-import {MixedType} from "./Mixed/MixedType";
-import {ClassType} from "./Class/ClassType";
-import {EnumType} from "./Enum/EnumType";
-import {MapType} from "./Map/MapType";
-import {Tools} from "../Tools/Tools";
+import { ObjectCollectionType } from "./Collection/ObjectCollection/ObjectCollectionType";
+import { ArrayCollectionType } from "./Collection/ArrayCollection/ArrayCollectionType";
+import { OptionType, IOptionTypeConstructor, IOptionDefinition } from "./OptionType";
+import { FunctionType } from "./Function/FunctionType";
+import { BooleanType } from "./Boolean/BooleanType";
+import { UntypedType } from "./Untyped/UntypedType";
+import { IOptionContext } from "./OptionContext";
+import { StringType } from "./String/StringType";
+import { NumberType } from "./Number/NumberType";
+import { ObjectType } from "./Object/ObjectType";
+import { ArrayType } from "./Array/ArrayType";
+import { MixedType } from "./Mixed/MixedType";
+import { ClassType } from "./Class/ClassType";
+import { EnumType } from "./Enum/EnumType";
+import { MapType } from "./Map/MapType";
+import { Tools } from "../Tools/Tools";
 
 export class OptionManager
 {
-    private static _types: {[typeName: string]: IOptionTypeConstructor} = {};
+    private static _types: { [typeName: string]: IOptionTypeConstructor } = {};
 
-    private _types: {[typeName: string]: OptionType} = {};
+    private _types: { [typeName: string]: OptionType } = {};
 
-    private _typeDefinitions: {[typeName: string]: IOptionDefinition} = {};
+    private _typeDefinitions: { [typeName: string]: IOptionDefinition } = {};
 
-    public static getTypes(): {[typeName: string]: IOptionTypeConstructor}
+    public static getTypes(): { [typeName: string]: IOptionTypeConstructor }
     {
         return this._types;
     }
@@ -36,6 +36,7 @@ export class OptionManager
                 'It should contain at least static method getType(): string'
             );
         }
+
         this._types[typeConstructor.getName()] = typeConstructor;
     }
 
@@ -47,6 +48,7 @@ export class OptionManager
                 'data type "' + typeName + '"'
             );
         }
+
         return this._types[typeName];
     }
 
@@ -68,8 +70,10 @@ export class OptionManager
                     'as it has a "type" parameter. But this type isn\'t registered in option manager'
                 );
             }
+
             return true;
         }
+
         return false;
     }
 
@@ -81,19 +85,21 @@ export class OptionManager
 
     private initializeTypeDefinitions(customOptionTypes: { [typeName: string]: IOptionDefinition } = {}): void
     {
-        let baseTypes = (<typeof OptionManager>this.constructor).getTypes(),
-            baseTypeDefinitions = <any>{};
+        const baseTypes = (<typeof OptionManager>this.constructor).getTypes();
+        const baseTypeDefinitions = <any>{};
 
-        for (let typeName in baseTypes) {
+        for (const typeName in baseTypes) {
             if (!baseTypes.hasOwnProperty(typeName)) {
                 continue;
             }
-            let definition = baseTypes[typeName].getEmptyDefinition();
+
+            const definition = baseTypes[typeName].getEmptyDefinition();
 
             if (definition) {
                 baseTypeDefinitions[typeName] = definition;
             }
         }
+
         this._typeDefinitions = Tools.extend(baseTypeDefinitions, customOptionTypes);
     }
 
@@ -103,11 +109,13 @@ export class OptionManager
 
         // Initializing type definitions
 
-        for (let typeName in typeDefinitions) {
+        for (const typeName in typeDefinitions) {
             if (!typeDefinitions.hasOwnProperty(typeName)) {
                 continue;
             }
-            let typeDefinition = Tools.copy(typeDefinitions[typeName]);
+
+            const typeDefinition = Tools.copy(typeDefinitions[typeName]);
+
             this._types[typeName] = this.createType(typeName, typeDefinition);
         }
     }
@@ -118,26 +126,30 @@ export class OptionManager
      * @param {Object.<Object>} definitions
      * @throws {Error}
      */
-    public validateTypeDefinitions(definitions: {[optName: string]: IOptionDefinition}): void
+    public validateTypeDefinitions(definitions: { [optName: string]: IOptionDefinition }): void
     {
         try {
             if (!Tools.isPlainObject(definitions)) {
                 throw 'error';
             }
-            for (let typeName in definitions) {
+
+            for (const typeName in definitions) {
                 if (!definitions.hasOwnProperty(typeName)) {
                     continue;
                 }
+
                 if (!Tools.isPlainObject(definitions[typeName])) {
                     throw 'error';
                 }
             }
+
         } catch (e) {
             if (e === 'error') {
                 throw new Error(
                     'Specified invalid option definitions! ' +
                     'It should be a plain object that contains option definitions.'
                 );
+
             } else {
                 throw e;
             }
@@ -149,11 +161,11 @@ export class OptionManager
      *
      * @param {Object.<IOptionDefinition>} definitions
      */
-    public addTypeDefinitions(definitions: {[optName: string]: IOptionDefinition}): void
+    public addTypeDefinitions(definitions: { [optName: string]: IOptionDefinition }): void
     {
         this.validateTypeDefinitions(definitions);
 
-        for (let typeName in definitions) {
+        for (const typeName in definitions) {
             if (definitions.hasOwnProperty(typeName)) {
                 this._typeDefinitions[typeName] = definitions[typeName];
             }
@@ -165,7 +177,7 @@ export class OptionManager
      *
      * @returns {Object<IOptionDefinition>}
      */
-    public getTypeDefinitions(): {[typeName: string]: IOptionDefinition}
+    public getTypeDefinitions(): { [typeName: string]: IOptionDefinition }
     {
         return this._typeDefinitions;
     }
@@ -182,6 +194,7 @@ export class OptionManager
         if (!this.hasType(typeName)) {
             throw new Error('Trying to get definition of non existent data type "' + typeName + '".');
         }
+
         return this.getTypeDefinitions()[typeName];
     }
 
@@ -190,7 +203,7 @@ export class OptionManager
      *
      * @returns {Object}
      */
-    public getTypes(): {[typeName: string]: OptionType}
+    public getTypes(): { [typeName: string]: OptionType }
     {
         return this._types;
     }
@@ -206,6 +219,7 @@ export class OptionManager
         if (!this.hasType(typeName)) {
             throw new Error('Trying to get definition of non existent data type "' + typeName + '".');
         }
+
         return this.getTypes()[typeName];
     }
 
@@ -237,7 +251,12 @@ export class OptionManager
      *
      * @returns {OptionType}
      */
-    public createType<T extends OptionType>(typeName: string, typeDefinition: IOptionDefinition, contextObject?: IOptionContext, contextOptionType?: OptionType): T & OptionType
+    public createType<T extends OptionType>(
+        typeName: string,
+        typeDefinition: IOptionDefinition,
+        contextObject?: IOptionContext,
+        contextOptionType?: OptionType
+    ): T & OptionType
     {
         if (!Tools.isPlainObject(typeDefinition)) {
             throw new Error(
@@ -245,11 +264,12 @@ export class OptionManager
                 'It shold be a plain object that matches IOptionDefinition interface'
             );
         }
-        let constructor = <typeof OptionManager>this.constructor,
-            parentTypeName = typeDefinition.type;
+
+        const constructor = <typeof OptionManager>this.constructor;
+        let parentTypeName = typeDefinition.type;
 
         if (this.hasType(parentTypeName)) {
-            let parentTypeDefinition = Tools.copy(this.getTypeDefinition(parentTypeName));
+            const parentTypeDefinition = Tools.copy(this.getTypeDefinition(parentTypeName));
             parentTypeName = parentTypeDefinition.type;
 
             typeDefinition = Tools.extendDeep(parentTypeDefinition, typeDefinition);
@@ -257,7 +277,7 @@ export class OptionManager
         }
 
         if (!constructor.hasType(parentTypeName)) {
-            let optionFullName = (contextOptionType && contextOptionType.getNameFull() + "." || '') + typeName;
+            const optionFullName = (contextOptionType && contextOptionType.getNameFull() + "." || '') + typeName;
 
             throw new Error(
                 'Trying to create option "' + optionFullName + '" of non existent type "' + parentTypeName + '"' +
@@ -265,8 +285,8 @@ export class OptionManager
             );
         }
 
-        let typeConstructor = constructor.getType(typeDefinition.type),
-            typeInst = new typeConstructor(this, typeName, typeDefinition);
+        const typeConstructor = constructor.getType(typeDefinition.type);
+        const typeInst = new typeConstructor(this, typeName, typeDefinition);
 
         // Setting context class and property
 

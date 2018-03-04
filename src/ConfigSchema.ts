@@ -1,14 +1,16 @@
-import {IOptionDefinition, OptionType} from './Option/OptionType';
-import {OptionManager} from './Option/OptionManager';
-import {ConfIgniter} from './ConfIgniter';
-import {Tools} from './Tools/Tools';
-import {Config} from "./Config";
+import { IOptionDefinition, OptionType } from './Option/OptionType';
+import { OptionManager } from './Option/OptionManager';
+import { ConfIgniter } from './ConfIgniter';
+import { Tools } from './Tools/Tools';
+import { Config } from "./Config";
+import "./ConfigSchemaConverter";
+
 
 export class ConfigSchema
 {
     private _confIgniter: ConfIgniter;
 
-    private _constructor: typeof Config;
+    private _constructor: typeof Config | any;
 
     private _definition: { [optName: string]: IOptionDefinition };
 
@@ -36,8 +38,7 @@ export class ConfigSchema
     {
         return this
             .getConfIgniter()
-            .getOptionManager()
-        ;
+            .getOptionManager();
     }
 
     /**
@@ -58,7 +59,7 @@ export class ConfigSchema
     private getConstructor(): typeof Config
     {
         if (!this.isConstructorCreated()) {
-            this.createConstructor();
+            this._constructor = this.createConstructor();
         }
 
         return this._constructor;
@@ -85,24 +86,22 @@ export class ConfigSchema
             return this._constructor;
         }
 
-        // this.getDefinition().processData();
-
         const configConstructor = <typeof Config>class ConfigInst extends Config {};
         const schemaOptions = this.getOptions();
 
-        this._constructor = configConstructor;
-
         for (let optName in schemaOptions) {
-            if (schemaOptions.hasOwnProperty(optName)) {
-                let optionTypeConstructor = (<typeof OptionType>schemaOptions[optName].constructor).getOptionClass();
-
-                Object.defineProperty(configConstructor.prototype, optName, {
-                    configurable: true,
-                    enumerable: true,
-                    get: optionTypeConstructor.generateGetter(optName),
-                    set: optionTypeConstructor.generateSetter(optName)
-                });
+            if (!schemaOptions.hasOwnProperty(optName)) {
+                continue;
             }
+
+            let optionTypeConstructor = (<typeof OptionType>schemaOptions[optName].constructor).getOptionClass();
+
+            Object.defineProperty(configConstructor.prototype, optName, {
+                configurable: true,
+                enumerable: true,
+                get: optionTypeConstructor.generateGetter(optName),
+                set: optionTypeConstructor.generateSetter(optName)
+            });
         }
 
         return configConstructor;
@@ -135,6 +134,10 @@ export class ConfigSchema
             const optionDefinition = schemaOptions[optName];
             const initValue = optionDefinition.getValue();
 
+            if (!option) {
+                continue;
+            }
+
             // Setting init value
 
             if (initValue !== undefined) {
@@ -152,7 +155,7 @@ export class ConfigSchema
      *
      * @returns {OptionType}
      */
-    public getOptions(): {[propName: string]: OptionType}
+    public getOptions(): { [propName: string]: OptionType }
     {
         return this._options;
     }
