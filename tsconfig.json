@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "strictNullChecks": false,
+    "noImplicitThis": false,
+    "sourceMap": true,
+    "allowJs": true,
+    "target": "ES5",
+    "baseUrl": "./src",
+    "lib": [
+      "DOM",
+      "ES5",
+      "ES2017",
+      "ScriptHost",
+      "ES2015.Promise"
+    ]
+  }
+}

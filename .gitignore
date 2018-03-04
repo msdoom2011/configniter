@@ -1,0 +1,9 @@
+.idea/
+.sublime/
+.tscache/
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+/node_modules/
+/build/*
+/dist/*

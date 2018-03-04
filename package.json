@@ -1,0 +1,41 @@
+{
+  "name": "conf-igniter",
+  "version": "0.0.0",
+  "description": "A framework for building validatable application configuration tree",
+  "main": "./dist/conf-igniter.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "author": "Dmitry Osipishin",
+  "email": "msdoom2011@gmail.com",
+  "license": "MIT",
+  "config": {
+    "dev_host": "localhost",
+    "dev_port": "8000"
+  },
+  "scripts": {
+    "build": "NODE_ENV=development $(npm bin)/grunt default",
+    "release": "NODE_ENV=production $(npm bin)/grunt default",
+    "version": "run-s release && git add dist",
+    "bump": "npm version patch"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-karma": "^2.0.0",
+    "grunt-tslint": "^4.0.1",
+    "grunt-webpack": "^2.0.1",
+    "jasmine-core": "^2.5.2",
+    "karma": "^1.5.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-jasmine": "^1.1.0",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "load-grunt-config": "^0.19.2",
+    "npm-run-all": "^4.1.2",
+    "time-grunt": "^1.4.0",
+    "ts-loader": "^2.0.2",
+    "tslint": "^5.9.*",
+    "typescript": "^2.*",
+    "webpack": "^2.2.1",
+    "webpack-dev-server": "^2.4.2"
+  }
+}
